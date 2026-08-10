@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "NSL Glove",
+    "slug": "nsl-glove-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "android": {
+      "package": "com.nslglove.app",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "37efaf55-1b6c-4bf9-a832-e83f4bf07c28"
+      }
+    },
+    "owner": "xaneai",
+    "plugins": [
+      "expo-asset"
+    ]
+  }
+}

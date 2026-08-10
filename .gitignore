@@ -1,0 +1,15 @@
+node_modules/
+.expo/
+dist/
+web-build/
+android/
+ios/
+*.log
+.DS_Store
+*.orig.*
+*.jks
+*.p12
+*.key
+*.mobileprovision
+.env
+.env.*
