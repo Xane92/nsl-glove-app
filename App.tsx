@@ -188,9 +188,12 @@ export default function App() {
 
   const handleIncoming = useCallback(
     (chunk: string) => {
+      // connect() was called with delimiter: '\n', so each event carries one
+      // complete line with the delimiter stripped. Drain the buffer every
+      // event — holding the tail back would strand every line forever.
       bufferRef.current += chunk;
       const parts = bufferRef.current.split(/\r?\n/);
-      bufferRef.current = parts.pop() ?? '';
+      bufferRef.current = '';
       for (const raw of parts) {
         const line = raw.replace(/\r$/, '');
         if (!line.length) continue;
@@ -395,14 +398,16 @@ export default function App() {
       item.dir === 'out'
         ? C.accent
         : item.dir === 'in'
-        ? C.textMid
+        ? C.textHi
         : isErrorLine(item.text)
         ? C.danger
         : C.textLow;
+    const marker =
+      item.dir === 'in' ? '< ' : item.dir === 'out' ? '> ' : '  ';
     return (
       <Text style={styles.logLine} numberOfLines={2}>
         <Text style={styles.logTs}>{item.ts}  </Text>
-        <Text style={{ color }}>{item.text}</Text>
+        <Text style={{ color }}>{marker}{item.text}</Text>
       </Text>
     );
   };
@@ -476,13 +481,13 @@ export default function App() {
 
         {/* COMMAND SEGMENTED */}
         <View style={styles.segment}>
-          {(['CAL', 'LIST', 'RAW'] as const).map((cmd, i) => (
+          {(['CAL', 'LIST', 'RAW', 'SAVE'] as const).map((cmd, i, arr) => (
             <Pressable
               key={cmd}
               onPress={() => send(cmd)}
               style={({ pressed }) => [
                 styles.segmentItem,
-                i < 2 && styles.segmentDivider,
+                i < arr.length - 1 && styles.segmentDivider,
                 { backgroundColor: pressed ? C.surfaceHi : 'transparent' },
               ]}
             >
