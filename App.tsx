@@ -47,17 +47,17 @@ const MAX_LOG_LINES = 400;
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const C = {
-  bg: '#0A0A0C',
-  surface: '#141418',
-  surfaceHi: '#1C1C22',
-  border: '#26262E',
-  textHi: '#F2F2F5',
-  textMid: '#8E8E99',
-  textLow: '#55555F',
-  accent: '#5B8DEF',
-  success: '#34C759',
-  warning: '#FF9F0A',
-  danger: '#FF453A',
+  bg: '#F4F4F2',
+  surface: '#FFFFFF',
+  surfaceHi: '#FBFBFA',
+  border: '#E3E3E0',
+  textHi: '#0B0B0C',
+  textMid: '#8A8A8E',
+  textLow: '#B4B4B6',
+  accent: '#0B0B0C',
+  success: '#0B0B0C',
+  warning: '#8A8A8E',
+  danger: '#B00020',
 };
 
 const S = { s4: 4, s8: 8, s12: 12, s16: 16, s24: 24, s32: 32, s48: 48 };
@@ -356,6 +356,32 @@ export default function App() {
     setTrainText('');
   }, [send, trainText]);
 
+  const sendDelete = useCallback(() => {
+    const w = trainText.trim().toUpperCase();
+    if (!w) {
+      Alert.alert(
+        'Type a word first',
+        'Type the sign you want to delete in the field above.',
+      );
+      return;
+    }
+    Alert.alert(
+      'Delete sign?',
+      `This removes all samples of "${w}".`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            send(`DEL:${w}`);
+            setTrainText('');
+          },
+        },
+      ],
+    );
+  }, [send, trainText]);
+
   const onPillPress = useCallback(() => {
     if (status === 'connected') {
       disconnect();
@@ -395,15 +421,15 @@ export default function App() {
 
   const renderLogItem = ({ item }: { item: LogEntry }) => {
     const color =
-      item.dir === 'out'
-        ? C.accent
-        : item.dir === 'in'
+      item.dir === 'in'
         ? C.textHi
+        : item.dir === 'out'
+        ? C.textMid
         : isErrorLine(item.text)
         ? C.danger
         : C.textLow;
     const marker =
-      item.dir === 'in' ? '< ' : item.dir === 'out' ? '> ' : '  ';
+      item.dir === 'in' ? '‹ ' : item.dir === 'out' ? '› ' : '  ';
     return (
       <Text style={styles.logLine} numberOfLines={2}>
         <Text style={styles.logTs}>{item.ts}  </Text>
@@ -414,7 +440,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor={C.bg} />
+      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
 
       {/* HEADER */}
       <View style={styles.header}>
@@ -427,16 +453,24 @@ export default function App() {
             { backgroundColor: pressed ? C.surfaceHi : C.surface },
           ]}
         >
-          <View style={[styles.pillDot, { backgroundColor: statusMeta.dot }]} />
+          <View
+            style={[
+              styles.statusSquare,
+              status === 'connected'
+                ? { backgroundColor: C.textHi, borderColor: C.textHi }
+                : { backgroundColor: 'transparent', borderColor: C.textHi },
+            ]}
+          />
           <Text style={styles.pillLabel}>{statusMeta.label}</Text>
           {status === 'connecting' ? (
-            <ActivityIndicator size="small" color={C.textMid} style={{ marginLeft: 6 }} />
+            <ActivityIndicator size="small" color={C.textHi} style={{ marginLeft: 6 }} />
           ) : null}
         </Pressable>
       </View>
 
       {/* HERO */}
       <View style={styles.hero}>
+        <Text style={styles.heroCaption}>LAST SIGN</Text>
         <Animated.Text
           style={[styles.heroWord, { opacity, transform: [{ scale }] }]}
           adjustsFontSizeToFit
@@ -445,7 +479,7 @@ export default function App() {
         >
           {displayWord}
         </Animated.Text>
-        <Text style={styles.heroCaption}>LAST SIGN</Text>
+        {word ? <Text style={styles.heroSubline}>Spoken just now</Text> : null}
       </View>
 
       {/* BODY */}
@@ -479,21 +513,43 @@ export default function App() {
           </Pressable>
         </View>
 
-        {/* COMMAND SEGMENTED */}
-        <View style={styles.segment}>
-          {(['CAL', 'LIST', 'RAW', 'SAVE'] as const).map((cmd, i, arr) => (
-            <Pressable
-              key={cmd}
-              onPress={() => send(cmd)}
-              style={({ pressed }) => [
-                styles.segmentItem,
-                i < arr.length - 1 && styles.segmentDivider,
-                { backgroundColor: pressed ? C.surfaceHi : 'transparent' },
-              ]}
-            >
-              <Text style={styles.segmentText}>{cmd}</Text>
-            </Pressable>
-          ))}
+        {/* COMMAND GRID */}
+        <View style={styles.grid}>
+          {(
+            [
+              { cmd: 'CAL', variant: 'default' },
+              { cmd: 'LIST', variant: 'default' },
+              { cmd: 'RAW', variant: 'default' },
+              { cmd: 'SAVE', variant: 'filled' },
+              { cmd: 'DONE', variant: 'default' },
+              { cmd: 'DEL', variant: 'destructive' },
+            ] as const
+          ).map(({ cmd, variant }) => {
+            const onPress =
+              cmd === 'DEL' ? sendDelete : () => send(cmd);
+            return (
+              <Pressable
+                key={cmd}
+                onPress={onPress}
+                style={({ pressed }) => [
+                  styles.gridBtn,
+                  variant === 'filled' && styles.gridBtnFilled,
+                  variant === 'destructive' && styles.gridBtnDestructive,
+                  { opacity: pressed ? 0.75 : 1 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.gridBtnText,
+                    variant === 'filled' && styles.gridBtnTextFilled,
+                    variant === 'destructive' && styles.gridBtnTextDestructive,
+                  ]}
+                >
+                  {cmd}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* ACTIVITY LOG */}
@@ -597,36 +653,63 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: S.s12,
-    borderRadius: R.pill,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: C.border,
   },
-  pillDot: { width: 6, height: 6, borderRadius: 3, marginRight: S.s8 },
-  pillLabel: { color: C.textMid, fontSize: 13, fontWeight: '500' },
+  statusSquare: {
+    width: 9,
+    height: 9,
+    borderRadius: 2,
+    borderWidth: 1.5,
+    marginRight: S.s8,
+  },
+  pillLabel: {
+    color: C.textHi,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+  },
 
   // Hero
   hero: {
-    flexGrow: 1,
-    minHeight: 220,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginHorizontal: PAGE,
+    marginTop: S.s8,
+    marginBottom: S.s16,
+    paddingVertical: S.s48,
     paddingHorizontal: PAGE,
-    paddingVertical: S.s32,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroWord: {
     color: C.textHi,
     fontSize: 96,
     fontWeight: '700',
-    letterSpacing: -2,
+    letterSpacing: -3,
     textAlign: 'center',
     lineHeight: 104,
+    marginVertical: S.s16,
   },
   heroCaption: {
-    marginTop: S.s16,
     color: C.textMid,
-    fontSize: 13,
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+  },
+  heroSubline: {
+    marginTop: S.s8,
+    color: C.textMid,
+    fontSize: 12,
     fontWeight: '500',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
 
@@ -643,6 +726,8 @@ const styles = StyleSheet.create({
     borderRadius: R.card,
     padding: S.s16,
     gap: S.s12,
+    borderWidth: 1,
+    borderColor: C.border,
   },
   cardLabel: {
     color: C.textMid,
@@ -671,28 +756,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Segmented control
-  segment: {
+  // Command grid (3x2)
+  grid: {
     flexDirection: 'row',
-    backgroundColor: C.surface,
-    borderRadius: R.btn,
-    overflow: 'hidden',
-    height: 48,
+    flexWrap: 'wrap',
+    gap: 10,
   },
-  segmentItem: {
-    flex: 1,
+  gridBtn: {
+    flexGrow: 1,
+    flexBasis: '30%',
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 16,
   },
-  segmentDivider: {
-    borderRightWidth: 1,
-    borderRightColor: C.border,
+  gridBtnFilled: {
+    backgroundColor: C.textHi,
+    borderColor: C.textHi,
   },
-  segmentText: {
-    color: C.textMid,
-    fontSize: 15,
-    fontWeight: '500',
-    letterSpacing: 0.5,
+  gridBtnDestructive: {
+    borderColor: '#EAD4D6',
+  },
+  gridBtnText: {
+    color: C.textHi,
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  gridBtnTextFilled: {
+    color: '#FFFFFF',
+  },
+  gridBtnTextDestructive: {
+    color: C.danger,
   },
 
   // Activity
