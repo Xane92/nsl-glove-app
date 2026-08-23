@@ -356,6 +356,21 @@ export default function App() {
     setTrainText('');
   }, [send, trainText]);
 
+  const sendClearAll = useCallback(() => {
+    Alert.alert(
+      'Clear all signs?',
+      'This deletes every trained sign from the glove. You will need to retrain.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: () => send('CLEAR'),
+        },
+      ],
+    );
+  }, [send]);
+
   const sendDelete = useCallback(() => {
     const w = trainText.trim().toUpperCase();
     if (!w) {
@@ -407,7 +422,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (logOpen && log.length) logListRef.current?.scrollToEnd({ animated: true });
+    if (logOpen && log.length) logListRef.current?.scrollToEnd({ animated: false });
   }, [log, logOpen]);
 
   const statusMeta = useMemo(() => {
@@ -523,10 +538,15 @@ export default function App() {
               { cmd: 'SAVE', variant: 'filled' },
               { cmd: 'DONE', variant: 'default' },
               { cmd: 'DEL', variant: 'destructive' },
+              { cmd: 'CLEAR', variant: 'destructive' },
             ] as const
           ).map(({ cmd, variant }) => {
             const onPress =
-              cmd === 'DEL' ? sendDelete : () => send(cmd);
+              cmd === 'DEL'
+                ? sendDelete
+                : cmd === 'CLEAR'
+                ? sendClearAll
+                : () => send(cmd);
             return (
               <Pressable
                 key={cmd}
@@ -574,7 +594,7 @@ export default function App() {
                 data={log}
                 keyExtractor={(i) => i.id}
                 renderItem={renderLogItem}
-                onContentSizeChange={() => logListRef.current?.scrollToEnd({ animated: true })}
+                onContentSizeChange={() => logListRef.current?.scrollToEnd({ animated: false })}
               />
               <Pressable onPress={clearLog} hitSlop={8} style={styles.clearLink}>
                 <Text style={styles.clearLinkText}>Clear</Text>
@@ -716,7 +736,7 @@ const styles = StyleSheet.create({
   // Body
   body: {
     paddingHorizontal: PAGE,
-    paddingBottom: S.s24,
+    paddingBottom: Platform.OS === 'android' ? S.s24 + 48 : S.s24,
     gap: S.s16,
   },
 
@@ -824,7 +844,7 @@ const styles = StyleSheet.create({
     maxHeight: 220,
   },
   logContent: {
-    paddingBottom: S.s4,
+    paddingBottom: Platform.OS === 'android' ? S.s16 + 48 : S.s4,
   },
   logLine: {
     fontFamily: MONO,
