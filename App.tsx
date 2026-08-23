@@ -483,6 +483,12 @@ export default function App() {
         </Pressable>
       </View>
 
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
       {/* HERO */}
       <View style={styles.hero}>
         <Text style={styles.heroCaption}>LAST SIGN</Text>
@@ -594,6 +600,7 @@ export default function App() {
                 data={log}
                 keyExtractor={(i) => i.id}
                 renderItem={renderLogItem}
+                scrollEnabled={false}
                 onContentSizeChange={() => logListRef.current?.scrollToEnd({ animated: false })}
               />
               <Pressable onPress={clearLog} hitSlop={8} style={styles.clearLink}>
@@ -603,6 +610,7 @@ export default function App() {
           ) : null}
         </View>
       </View>
+      </ScrollView>
 
       {/* DEVICE PICKER */}
       <Modal
@@ -707,6 +715,13 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 200,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
   heroWord: {
     color: C.textHi,
@@ -736,7 +751,7 @@ const styles = StyleSheet.create({
   // Body
   body: {
     paddingHorizontal: PAGE,
-    paddingBottom: Platform.OS === 'android' ? S.s24 + 48 : S.s24,
+    paddingBottom: S.s24,
     gap: S.s16,
   },
 
@@ -841,10 +856,9 @@ const styles = StyleSheet.create({
     gap: S.s8,
   },
   logList: {
-    maxHeight: 220,
   },
   logContent: {
-    paddingBottom: Platform.OS === 'android' ? S.s16 + 48 : S.s4,
+    paddingBottom: S.s4,
   },
   logLine: {
     fontFamily: MONO,
