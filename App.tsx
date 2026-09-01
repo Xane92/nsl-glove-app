@@ -14,6 +14,7 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   UIManager,
@@ -111,6 +112,7 @@ export default function App() {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [autoReconnect, setAutoReconnect] = useState(true);
   const [logOpen, setLogOpen] = useState(false);
+  const [includeMotion, setIncludeMotion] = useState(false);
 
   const readSubRef = useRef<BluetoothEventSubscription | null>(null);
   const disconnectSubRef = useRef<BluetoothEventSubscription | null>(null);
@@ -520,6 +522,18 @@ export default function App() {
             returnKeyType="send"
             onSubmitEditing={sendTrain}
           />
+
+          <View style={styles.motionRow}>
+            <Text style={styles.motionLabel}>Include hand motion</Text>
+            <Switch
+              value={includeMotion}
+              onValueChange={setIncludeMotion}
+              trackColor={{ false: C.border, true: C.accent }}
+              thumbColor={C.surface}
+              ios_backgroundColor={C.border}
+            />
+          </View>
+
           <Pressable
             onPress={sendTrain}
             disabled={!trainText.trim()}
@@ -552,7 +566,11 @@ export default function App() {
                 ? sendDelete
                 : cmd === 'CLEAR'
                 ? sendClearAll
+                : cmd === 'SAVE'
+                ? () => send(includeMotion ? 'SAVEM' : 'SAVE')
                 : () => send(cmd);
+            const label =
+              cmd === 'SAVE' && includeMotion ? 'SAVE +MOTION' : cmd;
             return (
               <Pressable
                 key={cmd}
@@ -571,7 +589,7 @@ export default function App() {
                     variant === 'destructive' && styles.gridBtnTextDestructive,
                   ]}
                 >
-                  {cmd}
+                  {label}
                 </Text>
               </Pressable>
             );
@@ -776,6 +794,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: S.s16,
     color: C.textHi,
     fontSize: 17,
+    fontWeight: '500',
+  },
+  motionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  motionLabel: {
+    color: C.textMid,
+    fontSize: 13,
     fontWeight: '500',
   },
   primaryBtn: {
